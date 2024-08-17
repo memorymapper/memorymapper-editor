@@ -2,28 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+@layer components {
+
+  h1 {
+    @apply font-light text-2xl mb-6;
+  }
+
+  h2 {
+      @apply font-light text-2xl mb-3;
+  }
+
+  h3 {
+      @apply font-light text-lg mb-2;
+  }
+
+  main h4 {
+    @apply font-light mb-2 italic;
+  }
+
+  img {
+    @apply mr-3 float-left;
+  }
+
+  h5 {
+    @apply font-light text-sm mb-2 italic;
+  }
+
+  p {
+      @apply font-light pb-6;
+  }
+
+  a {
+      @apply border-b border-sky-700 text-sky-700;
+  }
+
+  blockquote {
+      @apply px-8 italic font-extralight;
+  }
+  
+  div.editor-toolbar button {
+    @apply relative inline-flex items-center rounded-sm bg-white px-2 py-2 text-gray-400 hover:bg-gray-50 focus:z-10;
+  }
+
+  .is-active {
+    @apply border border-gray-400;
+  }
 }
 
 @layer utilities {
