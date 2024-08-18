@@ -1,7 +1,7 @@
 'use client'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import React, { useRef, useEffect, useState, useContext } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 
 export default function MapConfigurator(props) {
 
@@ -13,8 +13,25 @@ export default function MapConfigurator(props) {
     const [pitch, setPitch] = useState(props.pitch)
     const [bearing, setBearing] = useState(props.bearing)
 
+    const [style, setStyle] = useState(props.style)
+
+    // Todo: this should be loaded from memorymapper
+    const styles = [
+        ["https://api.maptiler.com/maps/positron/style.json", "Positron"], 
+        ["https://api.maptiler.com/maps/landscape/style.json", "Landscape"],
+        ["https://api.maptiler.com/maps/streets-v2/style.json", "Streets"],
+        ["https://api.maptiler.com/maps/dataviz/style.json", "Dataviz"],
+        ["https://api.maptiler.com/maps/topo-v2/style.json", 'Topo'],
+        ["https://api.maptiler.com/maps/uk-openzoomstack-night/style.json", 'UK OpenZoomStack Night']
+    ]
+
     const handleClick = (e) => {
         console.log('fired')
+    }
+
+    const handleStyleChange = (e) => {
+        setStyle(e.target.value)
+        map.current.setStyle(style + '?key=fL9NKV06gTKowpkIEnt4')
     }
 
     useEffect(() => {
@@ -22,7 +39,7 @@ export default function MapConfigurator(props) {
       
         map.current = new maplibregl.Map({
           container: mapContainer.current,
-          style: props.style + '?key=fL9NKV06gTKowpkIEnt4',
+          style: style + '?key=fL9NKV06gTKowpkIEnt4',
           center: [props.center.coordinates[0], props.center.coordinates[1]],
           zoom: props.zoom,
           doubleClickZoom: false,
@@ -43,7 +60,7 @@ export default function MapConfigurator(props) {
 
     return (
         <div className="w-full bg-blue-50 relative h-full flex">
-            <div className='w-1/4'>
+            <div className='w-1/4 p-5'>
                 <h3>Configure Map</h3>
                 <input 
                     type="text" 
@@ -59,6 +76,13 @@ export default function MapConfigurator(props) {
                     <li>Bearing: {bearing}</li>
                     <li>Pitch: {pitch}</li>
                 </ul>
+
+                <select name="style" id="style-select" className="w-full" onChange={handleStyleChange}>
+                    {styles.map((s, i) => 
+                        <option value={s[0]} key={i}>{s}</option>
+                    )}
+                </select>
+
                 <button 
                     aria-disabled={status.pending} 
                     type="submit" 
