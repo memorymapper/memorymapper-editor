@@ -15,17 +15,22 @@ export default function ProjectConfigurator(props) {
     async function saveProject(data) {
         const url = process.env.NEXT_PUBLIC_API_ENDPOINT + 'projects/create/'
 
+        console.log(props.userToken)
+
         try {
+            const body = JSON.stringify({
+                'title': data.title,
+                'owner': props.userId,
+                'maps': []
+            })
+            console.log(body)
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Token ${props.userToken}`
+                    "Authorization": `Bearer ${props.userToken}`
                 },
-                body: JSON.stringify({
-                    'title': data.title,
-                    'owner': props.userID
-                })
+                body: body
             })
 
             if (!response.ok) {
@@ -48,7 +53,7 @@ export default function ProjectConfigurator(props) {
     return (
         <div className='w-full flex flex-col'>
             <div className='w-full'>
-                <h1>New Project {props.userToken}</h1>
+                <h1>New Project</h1>
             </div>
             <div className='w-full'>
                 <form onSubmit={handleSubmit(onSubmit)}>

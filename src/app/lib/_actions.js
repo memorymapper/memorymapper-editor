@@ -1,5 +1,6 @@
 'use server' 
 import { signIn } from '@/auth'
+import { redirect } from "next/navigation"
 
 export async function authenticate(_currentState, formData) {
   try {
@@ -10,7 +11,7 @@ export async function authenticate(_currentState, formData) {
         case 'CredentialsSignin':
           return 'Invalid credentials.'
         default:
-          return 'Something went wrong.'
+          return error.type
       }
     }
     throw error

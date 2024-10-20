@@ -1,22 +1,28 @@
+export { auth as middleware } from "@/auth"
+
 /*export { auth as middleware } from "@/auth";
 
 export const config = {
     matcher: ['/blocknote', '/mdxeditor']
 }*/
 
-export function middleware(request) {
-    const loggedInUser = request.cookies.get('loggedInUserID')?.value
+// import LogOutButton from "./components/buttons/LogOutButton"
 
-    /*if (loggedInUser && !request.nextUrl.pathname.startsWith('/dashboard')) {
-        return Response.redirect(new URL('/dashboard', request.url))
-    }*/
+// export function middleware(request) {
+//     const loggedInUserID = request.cookies.get('loggedInUserID')?.value
+
+//     console.log(loggedInUserID)
+
+//     /*if (loggedInUserID && !request.nextUrl.pathname.startsWith('/dashboard')) {
+//         return Response.redirect(new URL('/', request.url))
+//     }*/
     
-    if (!loggedInUser && !request.nextUrl.pathname.startsWith('/auth/login')) {
-        return Response.redirect(new URL('/auth/login', request.url))
-    }
-}
+//     if (!loggedInUserID && !request.nextUrl.pathname.startsWith('/auth/login')) {
+//         return Response.redirect(new URL('/auth/login', request.url))
+//     }
+// }
 
 
-export const config = {
-    matcher: ['/((?!api|_next/static|_next/image|.*\\.png$).*)'],
-}
+// export const config = {
+//     matcher: ['/((?!api|_next/static|_next/image|.*\\.png$).*)'],
+// }

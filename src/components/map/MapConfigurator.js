@@ -5,6 +5,8 @@ import React, { useRef, useEffect, useState } from 'react'
 
 export default function MapConfigurator(props) {
 
+    console.log(props)
+
     const mapContainer = useRef(null)
     const map = useRef(null)
 
@@ -12,6 +14,9 @@ export default function MapConfigurator(props) {
     const [center, setCenter] = useState(props.center.coordinates)
     const [pitch, setPitch] = useState(props.pitch)
     const [bearing, setBearing] = useState(props.bearing)
+    const [title, setTitle] = useState(null)
+    const [showTerrain, setShowTerrain] = useState(true)
+    const [terrainExaggeration, setShowTerrainExaggeration] = useState(1)
 
     const [style, setStyle] = useState(props.style)
 
@@ -25,8 +30,28 @@ export default function MapConfigurator(props) {
         ["https://api.maptiler.com/maps/uk-openzoomstack-night/style.json", 'UK OpenZoomStack Night']
     ]
 
-    const handleClick = (e) => {
-        console.log('fired')
+    async function handleClick(e) {
+        const centerPoint = {'type': 'Point', 'coordinates': center}
+        const response = await fetch('/api/mapconfig/', {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer $props.accessToken}`
+            },
+            body: JSON.stringify({
+                'title': title,
+                'style': style,
+                'center': centerPoint,
+                'zoom': zoom,
+                'pitch': pitch,
+                'bearing': bearing,
+                'show_terrain': showTerrain,
+                'terrain_exaggeration': terrainExaggeration,
+                'min_zoom': 1,
+                'max_zoom': 18,
+                'scale': 'IMPERIAL'
+            })
+        })
     }
 
     const handleStyleChange = (e) => {
@@ -68,8 +93,16 @@ export default function MapConfigurator(props) {
                     placeholder="Untitled" 
                     required 
                     className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+                    onChange={e => setTitle(e.target.value)}
 
                 />
+
+                <input
+                    type="number"
+                    className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+                    value={center[0]}
+                />
+
                 <ul>
                     <li>Zoom: {(Math.round(zoom * 100) / 100).toFixed(2)}</li>
                     <li>Center: {center[0]}, {center[1]}</li>
@@ -84,10 +117,9 @@ export default function MapConfigurator(props) {
                 </select>
 
                 <button 
-                    aria-disabled={status.pending} 
                     type="submit" 
                     onClick={handleClick}
-                    className='rounded-md bg-stone-50 px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50'
+                    className='rounded-md bg-stone-50 px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 mt-5 w-full'
                 >
                     Save
                 </button>

@@ -46,8 +46,10 @@ export default function Tiptap(props) {
 
         if (!documentId) {
             // If there isn't a documentID, then it's a new document
-            const url = process.env.NEXT_PUBLIC_API_ENDPOINT + 'documents/create/'
 
+            // TODO: move to an API route
+            const url = process.env.NEXT_PUBLIC_API_ENDPOINT + 'documents/create/'
+             
             try {
                 const response = await fetch(url, {
                     method: 'POST',
@@ -147,6 +149,12 @@ export default function Tiptap(props) {
                 </div>
                 <div className='editor-toolbar mb-2'>
                     <button
+                        onClick={() => editor.chain().focus().setParagraph().run()}
+                        className={editor.isActive("paragraph") ? "is-active" : null}
+                        >
+                        <Image priority src={Paragraph} alt="paragraph"  className="mx-0 h-4 w-4" />
+                    </button>
+                    <button
                     onClick={() => editor.chain().focus().toggleBold().run()}
                     className={editor.isActive("bold") ? "is-active" : null}
                     >
@@ -167,12 +175,6 @@ export default function Tiptap(props) {
                     <button onClick={() => editor.chain().focus().clearNodes().run()}
                     >
                         <Image priority src={Clear} alt="clear" className="mx-0 h-4 w-4" />
-                    </button>
-                    <button
-                    onClick={() => editor.chain().focus().setParagraph().run()}
-                    className={editor.isActive("paragraph") ? "is-active" : null}
-                    >
-                        <Image priority src={Paragraph} alt="paragraph"  className="mx-0 h-4 w-4" />
                     </button>
                     <button
                     onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}

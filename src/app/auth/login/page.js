@@ -1,18 +1,26 @@
-'use client'
-import { authenticate } from '@/app/lib/actions'
+/*import { authenticate } from '@/app/lib/actions'
 import { useFormState, useFormStatus } from 'react-dom'
 import { useRouter } from 'next/navigation'
+*/
 
+import { SignIn} from "@/components/auth/SignIn"
 
-function LoginButton() {
+export default function Page() {
+    return (
+        <SignIn />
+    )
+}
+
+/*
+function LoginButton(props) {
     const status = useFormStatus()
     const router = useRouter()
    
-    const handleClick = (event) => {
-        if (status.pending) {
-            event.preventDefault()
-        }
-        router.push('/dashboard')
+    const handleClick = async (event) => {
+
+        console.log(status)
+
+        // router.push('/')
     }
    
     return (
@@ -54,3 +62,4 @@ export default function Page() {
         </div>
     )
 }
+*/

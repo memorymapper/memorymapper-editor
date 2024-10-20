@@ -51,11 +51,15 @@
 
   .is-active {
     @apply border border-gray-400;
-  }
+  }  
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+div.mapboxgl-ctrl-group {
+  display: none;
 }

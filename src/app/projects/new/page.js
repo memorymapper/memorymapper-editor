@@ -1,12 +1,19 @@
 import { cookies } from 'next/headers'
 import ProjectConfigurator from '@/components/projects/ProjectConfigurator'
+import { auth } from '@/auth'
 
-export default function Page() {
+export default async function Page() {
 
-    const userToken = cookies().get('userToken').value
-    const loggedInUserID = cookies().get('loggedInUserID').value
+    const session = await auth()
+
+    if (!session) {
+        redirect('/auth/login')
+    }
+
+    const accessToken = session.user.accessToken
+    const userId = session.user.userId
 
     return (
-        <ProjectConfigurator userToken={userToken} userID={loggedInUserID} />
+        <ProjectConfigurator userToken={accessToken} userId={userId} />
     )
 }

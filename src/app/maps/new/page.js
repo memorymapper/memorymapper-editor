@@ -1,8 +1,16 @@
 import MapConfigurator from "@/components/map/MapConfigurator"
 import { cookies } from "next/headers"
+import { auth } from "@/auth"
 
 
-export default function Page() {
+export default async function Page() {
+
+    const session = await auth()
+
+    if (!session) {
+        redirect('/auth/login')
+    }
+
     return (
         <MapConfigurator 
             id={0}
@@ -15,6 +23,8 @@ export default function Page() {
             max_zoom={22}
             show_terrain={false}
             terrain_exaggeration={1}
+            userId={session.user.userId}
+            accessToken={session.user.accessToken}
         />
     )
 }

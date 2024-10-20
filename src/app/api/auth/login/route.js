@@ -25,15 +25,19 @@ export async function POST(request) {
     }
 }
 
-export async function GET() {
-    const userToken = cookies().get('userToken').value
-    const url = 'http://192.168.79.2:8000/api-auth/user/'
+export async function GET(request) {
+    // Sets the logged in user on the basis of the token passed in the 
+    // headers
     try {
+        // const userToken = cookies().get('userToken').value
+        const userToken = request.headers.get('authorization')
+        cookies().set('userToken', userToken)
+        const url = 'http://192.168.79.2:8000/api-auth/user/'
         const response = await fetch(url, 
             {method: 'GET',    
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Token ${userToken}`
+                "Authorization": userToken
             }
         })
         if (!response.ok) {

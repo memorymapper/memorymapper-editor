@@ -1,6 +1,7 @@
 import { Inter } from "next/font/google"
 import "./globals.css"
 import Providers from "./providers";
+import {SessionProvider} from "next-auth/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -12,12 +13,17 @@ export const metadata = {
 export default function RootLayout({ children }) {
 
   return (
-    <html lang="en">
+    <html lang="en" data-theme="emerald">
       <body className={inter.className + ' h-screen'}>
-        <div className="w-full flex h-full justify-center">
-          <Providers>
-            {children}
-          </Providers>
+        <div className="navbar bg-base-100">
+          <a className="btn btn-ghost text-xl">Memory Map Studio</a>
+        </div>
+        <div className="w-full flex h-[calc(100%-4rem)] justify-center">
+          <SessionProvider>
+            <Providers>
+              {children}
+            </Providers>
+          </SessionProvider>
         </div>
       </body>
     </html>

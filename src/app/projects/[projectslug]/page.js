@@ -18,14 +18,16 @@ async function getProject(slug) {
 
 export default async function Page({ params }) {
 
-    const project = await getProject(params.slug)
+    const project = await getProject(params.projectslug)
     
-    console.log(project)
-
     return (
         <div className="flex flex-col w-full">
             <h1>Project { project.title }</h1>
-            <Link href="/maps/new/">New Map</Link>
+            <ul>
+                {project.maps.length ? project.maps.map(map => (<li><Link href={`${params.projectslug}/maps/${map}/edit`}>{map}</Link></li>)) : null }
+                <li><Link href="/maps/new/">New Map</Link></li>
+            </ul>
+            
         </div>
     )
 }
