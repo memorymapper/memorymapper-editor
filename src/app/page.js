@@ -37,7 +37,7 @@ export default async function Home() {
         <h1>MMT Editor</h1>
         <h2>{session.user.name}'s Projects</h2>
         <ul>
-        {user.owned_projects.length ? user.owned_projects.map(project => (<li><Link href={`/projects/${project}`}>{project}</Link></li>)) : null}
+        {user?.owned_projects.length ? user.owned_projects.map(project => (<li><Link href={`/projects/${project}`}>{project}</Link></li>)) : null}
         <li><Link href="/projects/new">Add New...</Link></li>
         </ul>
         <p>A project is a collection of maps, content and media items. You can invite others to collaborate on projects with you.</p>

@@ -19,12 +19,12 @@ export default function MapEditor(props) {
     const session = useSession()
 
     const activeUser = useRef(null)
-
     const [drawMode, setDrawMode] = useState(null)
-
     const [feature, setFeature] = useState(null)
-
-    const [editorVisible, setEditorVisible] = useState(false)
+    const [activeDocument, setActiveDocument] = useState(null)
+    // Split out just cos it's simpler - this updates the doc title in the ContentConfigurator when changed in the text editor
+    const [activeDocTitle, setActiveDocTitle] = useState(null) 
+    const [documents, setDocuments] = useState([])
 
     useEffect(() => {
         if (mapRef.current) return // stops map from intializing more than once
@@ -99,7 +99,8 @@ export default function MapEditor(props) {
 
                 const json = await response.json()
 
-                setFeature(json.json)
+                setFeature(json)
+                setDocuments(json.properties.documents)
             } 
             catch(error) {
                 console.log(error.massage)
@@ -137,7 +138,8 @@ export default function MapEditor(props) {
 
                 const json = await response.json()
 
-                setFeature(json.json)
+                setFeature(json)
+                setDocuments(json.properties.documents)
             } 
             catch(error) {
                 console.log(error.message)
@@ -185,20 +187,25 @@ export default function MapEditor(props) {
                     feature={feature} 
                     projectslug={params.projectslug} 
                     mapslug={params.mapslug} 
-                    featurename={feature ? feature.properties.name : ""}
-                    editorVisible={editorVisible}
-                    setEditorVisible={setEditorVisible}
+                    featurename={feature && feature.properties ? feature.properties.name : ""}
+                    setActiveDocument={setActiveDocument}
+                    activeDocument={activeDocument}
+                    documents={documents}
+                    setDocuments={setDocuments}
+                    activeDocTitle={activeDocTitle}
                 />
             </div>
             <div ref={mapContainer} className="map block w-2/3 h-full static">
                 <DrawModeSelector drawMode={drawMode} setDrawMode={setDrawMode} />
             </div>
         </div>
-        <div className={editorVisible ? 'w-full fixed flex h-full justify-end z-30' : 'hidden'}>
+        <div className={activeDocument ? 'w-full fixed flex h-full justify-end z-30' : 'hidden'}>
             <div className="w-2/3 h-full bg-base-100 border-l border-t">
                 <ContentEditor 
-                    editorVisible={editorVisible}
-                    setEditorVisible={setEditorVisible}
+                    setActiveDocument={setActiveDocument}
+                    activeDocument={activeDocument}
+                    activeDocTitle={activeDocTitle}
+                    setActiveDocTitle={setActiveDocTitle}
                 />
             </div>
         </div>

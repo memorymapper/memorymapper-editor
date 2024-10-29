@@ -1,7 +1,6 @@
 "use client"
-import { MdModeEdit } from "react-icons/md"
-import { MdAddCircleOutline } from "react-icons/md"
-import { useState } from "react"
+import { MdModeEdit, MdDragIndicator, MdAddCircleOutline } from "react-icons/md"
+import { useState, useEffect } from "react"
 
 import {
     DndContext, 
@@ -21,32 +20,66 @@ import {
 import {useSortable} from '@dnd-kit/sortable';
 import {CSS} from '@dnd-kit/utilities';
 
-
-const docList = [
-    {'id': 1, 'title': 'this'},
-    {'id': 2, 'title': 'that'},
-    {'id': 3, 'title': 'the other'},
-]
-
 export default function ContentConfigurator(props) {
 
-    function handleClick(e) {
-        props.setDocuments([...props.documents, {'title': null, 'slug': 'null'}])
+    async function handleClick(e) {
+        const doc = {
+            'title': '',
+            'body': '',
+            'point': props.feature.id
+        }
+
+        const url = '/api/entry/'
+
+        const resp = await fetch(url, {
+            method: 'POST',
+            body: JSON.stringify(doc)
+        })
+        
+        const data = await resp.json()
+
+        props.setDocuments([...props.documents, data])
     }
 
-    const [items, setItems] = useState(docList)
-
-    function handleDragEnd(event) {
+    async function handleDragEnd(event) {
 
         const {active, over} = event
         
         if (active.id !== over.id) {
-          setItems((items) => {
-            const oldIndex = items.findIndex((item) => item.id === active.id)
-            const newIndex = items.findIndex((item) => item.id === over?.id)
-            return arrayMove(items, oldIndex, newIndex)
-          });
+            const oldIndex = props.documents.findIndex((item) => item.id === active.id)
+            const newIndex = props.documents.findIndex((item) => item.id === over?.id)
+            const newDocuments = arrayMove(props.documents, oldIndex, newIndex)
+            // Update the array order so it's reflected in the UI
+            props.setDocuments(newDocuments)
+
+            async function updateOrder(doc, index) {
+                // Function to update server side
+                try {
+                    const url = `/api/entry/${doc.id}/`
+                    
+                    const resp = await fetch(url, {
+                        method: 'PUT',
+                        body: JSON.stringify({
+                            'id': doc.id,
+                            'title': doc.title,
+                            'point': props.point,
+                            'order': index
+                        })
+                    })
+        
+                    // const json = await resp.json()
+        
+                } catch (error) {
+                    console.log(error)
+                }
+            }
+
+            // Update server side...
+            newDocuments.forEach(async (doc, index) => {
+                updateOrder(doc, index)
+            })
         }
+
     }
 
     const sensors = useSensors(
@@ -64,17 +97,14 @@ export default function ContentConfigurator(props) {
                 onDragEnd={handleDragEnd}
             >
                 <SortableContext 
-                    items={items}
+                    items={props.documents}
                     strategy={verticalListSortingStrategy}
                 >
-                { items ? items.map((doc) => <ContentWidget title={doc.title} slug={doc.slug} id={doc.id} key={doc.id} />) : null }
+                { props.documents ? props.documents.map((doc) => <ContentWidget title={doc.title} slug={doc.slug} id={doc.id} key={doc.id} point={props.feature.id} setActiveDocument={props.setActiveDocument} activeDocument={props.activeDocument} activeDocTitle={props.activeDocTitle}/>) : null }
                 </SortableContext>
             </DndContext>
-            <button 
-                className="btn bg-base-100 btn-small rounded-full w-12 h-12 p-0 self-center"
-                onClick={(e) => {props.setEditorVisible(true)}}
-                >
-                    <MdAddCircleOutline onClick={handleClick}/>
+            <button className="btn bg-base-100 btn-small rounded-full w-12 h-12 p-0 self-center">
+                <MdAddCircleOutline onClick={handleClick}/>
             </button>
         </div>
     )
@@ -96,11 +126,18 @@ function ContentWidget(props) {
         transition,
     }
 
+    async function handleClick(e) {
+        props.setActiveDocument(props.id)
+    }
+
     return (
         
-        <div className="bg-base-100 w-100 shadow p-2 rounded-sm flex flex-row justify-between" style={style} ref={setNodeRef} {...attributes} {...listeners}>
-            <span>{props.id}</span>
-            <MdModeEdit />
+        <div className="bg-base-100 w-100 shadow p-2 rounded-sm flex flex-row justify-between" style={style} >
+            <div ref={setNodeRef} {...attributes} {...listeners}>
+            <MdDragIndicator />
+            </div>
+            <span className="text-sm">{props.title ? props.title : 'Untitled'}</span>
+            <button onClick={handleClick}><MdModeEdit /></button>
         </div>
         
     )

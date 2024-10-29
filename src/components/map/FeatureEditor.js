@@ -20,11 +20,11 @@ export default function FeatureEditor(props) {
     const session = useSession()
 
     const [name, setName] = useState(props.featurename)
-    const [theme, setTheme] = useState(props.feature.properties.theme)
-    const [weight, setWeight] = useState(props.feature.properties.weight)
-    const [published, setPublished] = useState(props.feature.properties.published)
+    const [theme, setTheme] = useState(props.feature.properties ? props.feature.properties.theme : null)
+    const [weight, setWeight] = useState(props.feature.properties ? props.feature.properties.weight : 1)
+    const [published, setPublished] = useState(props.feature.properties ? props.feature.properties.published : false)
 
-    const [documents, setDocuments] = useState([])
+    // const [documents, setDocuments] = useState([])    
 
     function handleChange(e) {
         switch (e.target.id) {
@@ -83,8 +83,8 @@ export default function FeatureEditor(props) {
                                 <div className="label">
                                     <span className="label-text">Theme</span>
                                 </div>
-                                <select className="select select-sm w-full max-w-xs">
-                                    <option disabled selected>Choose...</option>
+                                <select className="select select-sm w-full max-w-xs" defaultValue={'Choose...'}>
+                                    <option disabled>Choose...</option>
                                     <option>Homer</option>
                                     <option>Marge</option>
                                     <option>Bart</option>
@@ -94,13 +94,13 @@ export default function FeatureEditor(props) {
                                 <div className="label">
                                     <span className="label-text">Published</span>
                                 </div>
-                                <input type="checkbox" className="toggle toggle-sm" defaultChecked />
+                                <input type="checkbox" className="toggle toggle-sm" />
                             </label>
                             <label className="form-control w-full max-w-xs">
                                 <div className="label">
                                     <span className="label-text">Size</span>
                                 </div>
-                                <input type="range" min={0} max="100" value={40} className="range range-sm" />
+                                <input type="range" min={0} max="100" defaultValue={40} className="range range-sm" />
                             </label>
                         </div>
                 </div>
@@ -119,8 +119,12 @@ export default function FeatureEditor(props) {
                     <ContentConfigurator 
                         editorVisible={props.editorVisible}
                         setEditorVisible={props.setEditorVisible}
-                        documents={documents}
-                        setDocuments={setDocuments}
+                        documents={props.documents}
+                        setDocuments={props.setDocuments}
+                        feature={props.feature}
+                        activeDocument={props.activeDocument}
+                        setActiveDocument={props.setActiveDocument}
+                        activeDocTitle={props.activeDocTitle}
                     />
                 </div>
             </div>

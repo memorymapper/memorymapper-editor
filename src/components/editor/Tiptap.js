@@ -38,82 +38,64 @@ export default function Tiptap(props) {
     // an existing document, or it is null for it is a new document...
     const [documentId, setDocumentId] = useState(props.documentId ? props.documentId: null)
 
-    async function saveUpdateDocument() {
-        // If there isn't anything to save, don't save it
-        if (htmlContent == '') {
-           return
-        }
-
-        if (!documentId) {
-            // If there isn't a documentID, then it's a new document
-
-            // TODO: move to an API route
-            const url = process.env.NEXT_PUBLIC_API_ENDPOINT + 'documents/create/'
-             
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        title: 'test doc',
-                        body: htmlContent,
-                        published: true
-                    })
-                })
-                if (!response.ok) {
-                    throw new Error(`Response status: ${response.status}`)
-                }
-                const json = await response.json()
-                setDocumentId(json.id)
-            } catch(error) {
-                console.error(error.message)
-            }
-        }
-
-        if (documentId) {
-            // If there IS a documentID, then update the record...
-            try {
-                const url = process.env.NEXT_PUBLIC_API_ENDPOINT + `documents/${props.slug}/`
-                const response = await fetch(url, {
-                    method: 'PUT',
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Token ${props.userToken}`
-                    },
-                    body: JSON.stringify({
-                        id: documentId,
-                        title: title,
-                        body: htmlContent,
-                        published: true
-                    })
-                })
-                if (!response.ok) {
-                    throw new Error(`Response status: ${response.status}`)
-                }
-                const json = await response.json()
-                setDocumentId(json.id)
-            } catch(error) {
-                console.error(error.message)
-            }
-        }
-
+    function onTitleChange(e) {
+        setTitle(e.target.value)
+        saveUpdateDocument()
     }
 
-    const {
-        register,
-        handleSubmit,
-        formState: { errors },
-    } = useForm()
+    useEffect(() => {
 
-    const onSubmit = (data) => {
-        saveUpdateDocument()
+        if (!props.activeDocument) {
+            return
+        }
+
+        console.log(props.activeDocument)
+
+        async function getDocument() {
+            try {
+                const url = `/api/entry/${props.activeDocument}/`
+                const resp = await fetch(url, {
+                    method: 'GET',
+                })
+
+                const json = await resp.json()
+
+                console.log(json)
+
+                setHtmlContent(json.json.body)
+                setTitle(json.json.title)
+
+            } catch (error) {
+                console.log(error)
+            }
+        }
+        getDocument()
+    }, [props.activeDocument])
+
+    async function saveUpdateDocument() {
+        try {
+            const url = `/api/entry/${props.activeDocument.id}/`
+            const response = await fetch(url, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    id: documentId,
+                    title: title,
+                    body: htmlContent,
+                })
+            })
+            if (!response.ok) {
+                throw new Error(`Response status: ${response.status}`)
+            }
+            const json = await response.json()
+            setDocumentId(json.id)
+        } catch(error) {
+            console.error(error.message)
+        }
     }
 
     const editor = useEditor({
         extensions: [StarterKit],
-        content: htmlContent ? htmlContent : props.content,
+        content: htmlContent,
         onUpdate: ({editor}) => {
             const html = editor.getHTML()
             setHtmlContent(html)
@@ -131,120 +113,116 @@ export default function Tiptap(props) {
 
     return ( 
         <>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <InsertImage open={insertImageOpen} setOpen={setInsertImageOpen} />
-                <div className="my-2">
-                    <input
-                        type="text"
-                        name="title"
-                        id="title"
-                        {...register("title", { required: "Title is required" })}
-                        className={"block w-full rounded-sm border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-100 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-gray-400 sm:text-sm sm:leading-6"}
-                        placeholder='Title'
-                        onChange={(e)=> {setTitle(e.target.value)}}
-                        aria-invalid={errors.title ? "true" : "false"}
-                        value={props.title ? props.title : null}
-                    />
-                    {errors.title && <span>This field is required</span>}
-                </div>
-                <div className='editor-toolbar mb-2'>
-                    <button
-                        onClick={() => editor.chain().focus().setParagraph().run()}
-                        className={editor.isActive("paragraph") ? "is-active" : null}
-                        >
-                        <Image priority src={Paragraph} alt="paragraph"  className="mx-0 h-4 w-4" />
-                    </button>
-                    <button
-                    onClick={() => editor.chain().focus().toggleBold().run()}
-                    className={editor.isActive("bold") ? "is-active" : null}
+            <InsertImage open={insertImageOpen} setOpen={setInsertImageOpen} />
+            <div className="my-2">
+                <input
+                    type="text"
+                    name="title"
+                    id="title"
+                    className={"block w-full rounded-sm border-0 p-1.5 text-gray-900 ring-1 ring-inset ring-gray-100 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-gray-400 sm:text-sm sm:leading-6"}
+                    placeholder='Title'
+                    onChange={onTitleChange}
+                    defaultValue={title}
+                />
+            </div>
+            <div className='editor-toolbar mb-2'>
+                <button
+                    onClick={() => editor.chain().focus().setParagraph().run()}
+                    className={editor.isActive("paragraph") ? "is-active" : null}
                     >
-                        <Image priority src={Bold} alt="bold" className="mx-0 h-4 w-4" />
-                    </button>
-                    <button
-                    onClick={() => editor.chain().focus().toggleItalic().run()}
-                    className={editor.isActive("italic") ? "is-active" : null}
-                    >
-                        <Image priority src={Italic} alt="italic"  className="mx-0 h-4 w-4" />
-                    </button>
-                    {/*<button
-                    onClick={() => editor.chain().focus().toggleStrike().run()}
-                    className={editor.isActive("strike") ? "is-active" : ""}
-                    >
-                    strike
-                    </button>*/}
-                    <button onClick={() => editor.chain().focus().clearNodes().run()}
-                    >
-                        <Image priority src={Clear} alt="clear" className="mx-0 h-4 w-4" />
-                    </button>
-                    <button
-                    onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                    className={editor.isActive("heading", { level: 1 }) ? "is-active" : null}
-                    >
-                        <Image priority src={H1} alt="H1"  className="mx-0 h-4 w-4" />
-                    </button>
-                    <button
-                    onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                    className={editor.isActive("heading", { level: 2 }) ? "is-active" : null}
-                    >
-                        <Image priority src={H2} alt="H2"  className="mx-0 h- w-4" />
-                    </button>
-                    <button
-                    onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                    className={editor.isActive("heading", { level: 3 }) ? "is-active" : null}
-                    >
-                        <Image priority src={H3} alt="H1"  className="mx-0 h-4 w-4" />
-                    </button>
-                    <button
-                    onClick={() => editor.chain().focus().toggleBulletList().run()}
-                    className={editor.isActive("bulletList") ? "is-active" : ""}
-                    >
-                        <Image priority src={BulletList} alt="H1"  className="mx-0 h-4 w-4" />
-                    </button>
-                    <button
-                    onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                    className={editor.isActive("orderedList") ? "is-active" : ""}
-                    >
-                        <Image priority src={NumberList} alt="H1"  className="mx-0 h-4 w-4" />
-                    </button>
-                    <button
-                    onClick={() => editor.chain().focus().toggleBlockquote().run()}
-                    className={editor.isActive("blockquote") ? "is-active" : ""}
-                    >
-                        <Image priority src={BlockQuote} alt="H1"  className="mx-0 h-4 w-4" />
-                    </button>
-                    <button onClick={() => editor.chain().focus().undo().run()}>
-                        <Image priority src={Undo} alt="H1"  className="mx-0 h-4 w-4" />
-                    </button>
-                    <button onClick={() => editor.chain().focus().redo().run()}>
-                        <Image priority src={Redo} alt="H1"  className="mx-0 h-4 w-4" />
-                    </button>
-                </div>
-                <div>
-                    <EditorContent editor={editor} />
-                    <input type='submit' className="rounded-md bg-gray-400 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mr-2" value='Save' />
-                    {/*<button
-                        type="button"
-                        className="rounded-md bg-gray-400 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mr-2"
-                        onClick={saveUpdateDocument}
-                        >Save
-                    </button>
-                    */}
-                    <button
-                        type="button"
-                        className="rounded-md bg-gray-400 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mr-2"
-                        onClick={saveUpdateDocument}
-                    >
-                        Publish
-                    </button>
-                    <button
-                        type="button"
-                        className="rounded-md bg-gray-400 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                        onClick={saveUpdateDocument}
-                    >
-                        Delete
-                    </button>
-                </div>
-            </form>
+                    <Image priority src={Paragraph} alt="paragraph"  className="mx-0 h-4 w-4" />
+                </button>
+                <button
+                onClick={() => editor.chain().focus().toggleBold().run()}
+                className={editor.isActive("bold") ? "is-active" : null}
+                >
+                    <Image priority src={Bold} alt="bold" className="mx-0 h-4 w-4" />
+                </button>
+                <button
+                onClick={() => editor.chain().focus().toggleItalic().run()}
+                className={editor.isActive("italic") ? "is-active" : null}
+                >
+                    <Image priority src={Italic} alt="italic"  className="mx-0 h-4 w-4" />
+                </button>
+                {/*<button
+                onClick={() => editor.chain().focus().toggleStrike().run()}
+                className={editor.isActive("strike") ? "is-active" : ""}
+                >
+                strike
+                </button>*/}
+                <button onClick={() => editor.chain().focus().clearNodes().run()}
+                >
+                    <Image priority src={Clear} alt="clear" className="mx-0 h-4 w-4" />
+                </button>
+                <button
+                onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                className={editor.isActive("heading", { level: 1 }) ? "is-active" : null}
+                >
+                    <Image priority src={H1} alt="H1"  className="mx-0 h-4 w-4" />
+                </button>
+                <button
+                onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                className={editor.isActive("heading", { level: 2 }) ? "is-active" : null}
+                >
+                    <Image priority src={H2} alt="H2"  className="mx-0 h- w-4" />
+                </button>
+                <button
+                onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                className={editor.isActive("heading", { level: 3 }) ? "is-active" : null}
+                >
+                    <Image priority src={H3} alt="H1"  className="mx-0 h-4 w-4" />
+                </button>
+                <button
+                onClick={() => editor.chain().focus().toggleBulletList().run()}
+                className={editor.isActive("bulletList") ? "is-active" : ""}
+                >
+                    <Image priority src={BulletList} alt="H1"  className="mx-0 h-4 w-4" />
+                </button>
+                <button
+                onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                className={editor.isActive("orderedList") ? "is-active" : ""}
+                >
+                    <Image priority src={NumberList} alt="H1"  className="mx-0 h-4 w-4" />
+                </button>
+                <button
+                onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                className={editor.isActive("blockquote") ? "is-active" : ""}
+                >
+                    <Image priority src={BlockQuote} alt="H1"  className="mx-0 h-4 w-4" />
+                </button>
+                <button onClick={() => editor.chain().focus().undo().run()}>
+                    <Image priority src={Undo} alt="H1"  className="mx-0 h-4 w-4" />
+                </button>
+                <button onClick={() => editor.chain().focus().redo().run()}>
+                    <Image priority src={Redo} alt="H1"  className="mx-0 h-4 w-4" />
+                </button>
+            </div>
+            <div>
+                <EditorContent editor={editor} />
+                {/*<input type='submit' className="rounded-md bg-gray-400 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mr-2" value='Save' />*/}
+                {<button
+                    type="button"
+                    className="rounded-md bg-gray-400 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mr-2"
+                    onClick={saveUpdateDocument}
+                    >Save
+                </button>
+                }
+                {/*
+                <button
+                    type="button"
+                    className="rounded-md bg-gray-400 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mr-2"
+                    onClick={saveUpdateDocument}
+                >
+                    Publish
+                </button>
+                <button
+                    type="button"
+                    className="rounded-md bg-gray-400 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    onClick={saveUpdateDocument}
+                >
+                    Delete
+                </button>*/}
+            </div>
         </>
     )
 }
