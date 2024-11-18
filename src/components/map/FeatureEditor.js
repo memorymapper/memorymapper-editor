@@ -1,14 +1,40 @@
 
 'use client'
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
 import TagConfigurator from "./TagConfigurator"
 import { MdModeEdit } from "react-icons/md"
 import ContentConfigurator from "./ContentConfigurator"
+import { AddThemeModal } from "./AddThemeModal"
+import useFeature from "@/swrrequests/useFeature"
+import Image from "next/image"
+import FeatureThumbnail from "../media/FeatureThumbnail"
 
 export default function FeatureEditor(props) {
 
-    if (!props.feature) {
+    // const [feature, setFeature] = useState(null)
+    const draw = !props.featureID ? true : false
+
+    const id = !props.featureID ? props.mapLibreFeatureID : props.featureID
+    
+    const { feature, isLoading, isError} = useFeature(`?featureID=${id}&draw=${draw}`)
+
+    const [name, setName] = useState(null)
+    const [theme, setTheme] = useState(null)
+    const [weight, setWeight] = useState(null)
+    const [published, setPublished] = useState(null)
+    // const [thumbnail, setThumbnail] = useState(null)
+
+    const addThemeModalRef = useRef(null)
+
+    useEffect(() => {
+        setName(feature ? feature.properties.name : "")
+        setTheme(feature ? feature.properties.theme : "")
+        setWeight(feature ? feature.properties.weight : 1)
+        setPublished(feature ? feature.properties.published : false)
+    }, [feature])
+
+    if (!props.featureID && !props.mapLibreFeatureID) {
         return (
         <div>
             <h3>Instructions</h3>
@@ -17,16 +43,42 @@ export default function FeatureEditor(props) {
         </div>)
     }
 
-    const session = useSession()
+    if (isLoading) {
+        return <>Loading...</>
+    }
 
-    const [name, setName] = useState(props.featurename)
-    const [theme, setTheme] = useState(props.feature.properties ? props.feature.properties.theme : null)
-    const [weight, setWeight] = useState(props.feature.properties ? props.feature.properties.weight : 1)
-    const [published, setPublished] = useState(props.feature.properties ? props.feature.properties.published : false)
+    if (isError) {
+        return <>Error...</>
+    }
 
-    // const [documents, setDocuments] = useState([])    
+    async function handleThumbnailChange(e) {
 
-    function handleChange(e) {
+        
+
+        try {
+            const thumbnail = e.target.files[0]
+            let data = new FormData()
+            data.append('popup_image', thumbnail)    
+            
+            const response = await fetch(`http://192.168.79.2:8000/api/1.0/features/${feature.id}/thumbnail/upload/`, {
+            method: 'POST',
+            body: data,
+            })
+
+            if (!response.ok) {
+                throw new Error(`Response status: ${response.status}`)
+            }
+
+            const json = await response.json()
+            
+            console.log(json)
+
+        } catch(error) {
+            console.log(error.message)
+        }
+    }
+
+    async function handleChange(e) {
         switch (e.target.id) {
             case 'name':
                 setName(e.target.value)
@@ -37,68 +89,154 @@ export default function FeatureEditor(props) {
             case 'theme':
                 setWeight(e.target.value)
                 break
+            case 'published':
+                setPublished(e.target.value)
+                break
             default:
                 // do nothing
                 break
-        }    
+        }
+
+        try {
+            const url = `/api/feature/point/`
+            
+            const data = {
+                id: feature.id,
+                name: name,
+                project: props.projectslug,
+                mapconfig: props.mapslug,
+                geom: feature.geometry,
+                weight: weight,
+                published: published,
+                theme: theme,
+                documents: feature.properties.documents,
+                popup_image: thumbnail
+            }
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                body: JSON.stringify(data)
+            })
+
+            console.log(JSON.stringify(data))
+
+            if (!response.ok) {
+                throw new Error(`Response status: ${response.status}`)
+            }
+
+            const json = await response.json()
+
+        } catch(error) {
+            console.log(error.message)
+        }
+
+
     }
 
+    
+
+    /*
     useEffect(() => {
-        setName(props.featurename)
-    }, [props.featurename])
+        
+        async function getFeature() {
+
+            if (!props.mapLibreFeatureID && !props.featureID) {
+                return
+            }
+
+            try {
+
+                // Check if there's an associated maplibre_id; if there isn't the ID
+                // will have come from the server as the UUID field
+                let url = ''
+
+                if (!props.featureID) {
+                    url = `/api/feature/point/?featureID=${props.mapLibreFeatureID}&draw=${true}`
+                } else {
+                    url = `/api/feature/point/?featureID=${props.featureID}&draw=${false}`
+                }
+
+                const response = await fetch(url)
+
+                if (!response.ok) {
+                    throw new Error(`Response status: ${response.status}`)
+                }
+
+                const json = await response.json()
+
+                setFeature(json)
+            } 
+            catch(error) {
+                console.log(error.message)
+            }
+        }
+
+        getFeature()
+
+    }, [props.featureID, props.mapLibreFeatureID])
+    */
+
+    /*if (!loadedFeature) {
+        return (
+        <div>
+            <h3>Instructions</h3>
+            <p>Click on a feature to edit it.</p>
+            <p>Use the draw controls on the right to add features to the map.</p>
+        </div>)
+    }*/
+
+    // setFeature(loadedFeature)
 
     return (
-        <div className="flex flex-col gap-4 h-full">
-            <h3>Edit Feature</h3>
+        <div className="flex flex-col gap-4 h-full z-50 relative">
+            <h2>
+                <input 
+                    type="text" 
+                    id="name" 
+                    value={name} 
+                    onChange={handleChange}
+                    onBlur={handleChange}
+                    placeholder="Untitled"
+                    className="input input-sm w-full"
+                />
+            </h2>
             <div className="collapse collapse-arrow">
-                <input type="checkbox" defaultChecked/>
-                    <div className="collapse-title">Name and Thumbnail</div>
+                {/*<input type="checkbox" defaultChecked/>*/}
+                <input type="radio" name="feature-editor-accordion" />
+                    <div className="collapse-title">Appearance</div>
                         <div className="collapse-content">
                             <div className="flex flex-col gap-4">
-                            <label className="form-control w-full max-w-xs">
-                                <div className="label">
-                                    <span className="label-text">Feature Name</span>
-                                </div>
-                                <input 
-                                    type="text" 
-                                    id="name" 
-                                    value={name} 
-                                    onChange={handleChange} 
-                                    placeholder="Name"
-                                    className="input input-sm w-full max-w-xs"
-                                >
-                                </input>
-                            </label>
-                            <label className="form-control w-full max-w-xs">
-                                <div className="label">
-                                    <span className="label-text">Thumbnail</span>
-                                </div>
-                                <input 
-                                    type="file" 
-                                    className="file-input w-full max-w-xs file-input-sm" 
-                                    id="thumbnail" 
-                                />
-                            </label>
+                            <FeatureThumbnail feature={feature} handleThumbnailChange={handleThumbnailChange} />
                             <label className="form-control w-full max-w-xs">
                                 <div className="label">
                                     <span className="label-text">Theme</span>
                                 </div>
-                                <select className="select select-sm w-full max-w-xs" defaultValue={'Choose...'}>
+                                <select className="select select-sm w-full max-w-xs" defaultValue={'Choose...'} onChange={(e) => {
+                                    if (e.target.value == 'Add new...') {
+                                        
+                                        addThemeModalRef.current.show()
+                                    }
+                                }}>
                                     <option disabled>Choose...</option>
-                                    <option>Homer</option>
-                                    <option>Marge</option>
-                                    <option>Bart</option>
+                                    <option>None</option>
+                                    <option>Add new...</option>
                                 </select>
                             </label>
+                            <AddThemeModal ref={addThemeModalRef} />
                             <label className="form-control w-full max-w-xs">
                                 <div className="label">
                                     <span className="label-text">Published</span>
                                 </div>
-                                <input type="checkbox" className="toggle toggle-sm" />
+                                <input 
+                                    type="checkbox" 
+                                    className="toggle toggle-sm" 
+                                    id="published"
+                                    defaultChecked={published}
+                                />
                             </label>
                             <label className="form-control w-full max-w-xs">
                                 <div className="label">
-                                    <span className="label-text">Size</span>
+                                    <span className="label-text">Weight</span>
                                 </div>
                                 <input type="range" min={0} max="100" defaultValue={40} className="range range-sm" />
                             </label>
@@ -106,65 +244,28 @@ export default function FeatureEditor(props) {
                 </div>
             </div>
             <div className="collapse collapse-arrow">
-                <input type="checkbox" />
+                {/*<input type="checkbox" />*/}
+                <input type="radio" name="feature-editor-accordion" />
                 <div className="collapse-title">Tags</div>
                 <div className="collapse-content">
                     <TagConfigurator feature={props.feature} />
                 </div>
             </div>
             <div className="collapse collapse-arrow">
-                <input type="checkbox" />
+                {/*<input type="checkbox" />*/}
+                <input type="radio" name="feature-editor-accordion" />
                 <div className="collapse-title">Content</div>
                 <div className="collapse-content">
                     <ContentConfigurator 
                         editorVisible={props.editorVisible}
                         setEditorVisible={props.setEditorVisible}
-                        documents={props.documents}
-                        setDocuments={props.setDocuments}
-                        feature={props.feature}
+                        feature={feature}
                         activeDocument={props.activeDocument}
                         setActiveDocument={props.setActiveDocument}
                         activeDocTitle={props.activeDocTitle}
                     />
                 </div>
             </div>
-            <button className="btn btn-sm btn-primary" onClick={async () => {
-                                
-                try {
-                    const url = `/api/feature/point/`
-                    
-                    const data = {
-                        id: props.feature.id,
-                        name: name,
-                        project: props.projectslug,
-                        mapconfig: props.mapslug,
-                        geom: props.feature.geometry,
-                        weight: weight,
-                        published: published,
-                        theme: theme
-                    }
-
-                    const response = await fetch(url, {
-                        method: 'PUT',
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${session.data.user.accessToken}`
-                        },
-                        body: JSON.stringify(data)
-                    })
-
-                    if (!response.ok) {
-                        throw new Error(`Response status: ${response.status}`)
-                    }
-
-                    const json = await response.json()
-
-                } 
-                catch(error) {
-                    console.log(error.message)
-                }
-
-            }}>Save</button>
             <button className="btn btn-sm btn-warning">Delete</button>
         </div>
     )

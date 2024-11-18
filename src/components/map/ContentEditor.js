@@ -9,7 +9,6 @@ export default function ContentEditor(props) {
                 setActiveDocTitle={props.setActiveDocTitle} 
                 setActiveDocument={props.setActiveDocument}
             />
-            <button className="btn btn-sm" onClick={(e) => {props.setActiveDocument(null)}}>Close</button>
         </div>
     )
 

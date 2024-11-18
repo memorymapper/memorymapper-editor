@@ -4,7 +4,6 @@ export default function DrawModeSelector(props) {
 
     function handleClick(e) {
         if (!e.target.dataset.drawmode) {
-            console.log(e.target.dataset)
             return
         }
         props.setDrawMode(e.target.dataset.drawmode)

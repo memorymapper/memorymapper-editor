@@ -18,7 +18,7 @@ export async function GET(request) {
 
         const json = await response.json()
 
-        return Response.json({ json })
+        return Response.json( json )
     } catch(error) {
         console.error(error.message)
         return new Response()

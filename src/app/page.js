@@ -33,14 +33,34 @@ export default async function Home() {
   
 
   return (
-    <div className="w-full flex flex-col">
-        <h1>MMT Editor</h1>
-        <h2>{session.user.name}'s Projects</h2>
-        <ul>
-        {user?.owned_projects.length ? user.owned_projects.map(project => (<li><Link href={`/projects/${project}`}>{project}</Link></li>)) : null}
-        <li><Link href="/projects/new">Add New...</Link></li>
-        </ul>
-        <p>A project is a collection of maps, content and media items. You can invite others to collaborate on projects with you.</p>
+    <div className="w-full flex flex-col m-10">
+        <div>
+          <h2>{session.user.name}'s Projects</h2>
+          <p>A project is a collection of maps, content and media items. You can invite others to collaborate on projects with you.</p>
+        </div>
+        <div className="w-full grid grid-cols-3 gap-4">
+        {user?.owned_projects.length ? user.owned_projects.map(project => (
+          <>
+          <div className="card bg-base-100 shadow-md rounded-sm my-4">
+            <div className="card-body">
+              <h2 className="card-title">{project}</h2>
+              <div className="card-actions justify-end">
+              <Link href={`/projects/${project}`}>Edit</Link>
+              </div>
+            </div>
+          </div>
+          </>
+          )) : null}
+          </div>
+        
+        <div className="card bg-base-100 shadow-sm">
+            <div className="card-body">
+              <h2 className="card-title">Add New</h2>
+              <div className="card-actions justify-end">
+                <Link href="/projects/new">+</Link>
+              </div>
+            </div>
+          </div>
         <LogOutButton username={session.user.name} />
       </div>
   )

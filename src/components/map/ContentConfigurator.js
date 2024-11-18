@@ -22,11 +22,15 @@ import {CSS} from '@dnd-kit/utilities';
 
 export default function ContentConfigurator(props) {
 
+    const [documents, setDocuments] = useState([])
+
     async function handleClick(e) {
+
         const doc = {
             'title': '',
             'body': '',
-            'point': props.feature.id
+            'point': props.feature.id,
+            'order': documents.length
         }
 
         const url = '/api/entry/'
@@ -38,7 +42,7 @@ export default function ContentConfigurator(props) {
         
         const data = await resp.json()
 
-        props.setDocuments([...props.documents, data])
+        setDocuments([...documents, data])
     }
 
     async function handleDragEnd(event) {
@@ -46,11 +50,11 @@ export default function ContentConfigurator(props) {
         const {active, over} = event
         
         if (active.id !== over.id) {
-            const oldIndex = props.documents.findIndex((item) => item.id === active.id)
-            const newIndex = props.documents.findIndex((item) => item.id === over?.id)
-            const newDocuments = arrayMove(props.documents, oldIndex, newIndex)
+            const oldIndex = documents.findIndex((item) => item.id === active.id)
+            const newIndex = documents.findIndex((item) => item.id === over?.id)
+            const newDocuments = arrayMove(documents, oldIndex, newIndex)
             // Update the array order so it's reflected in the UI
-            props.setDocuments(newDocuments)
+            setDocuments(newDocuments)
 
             async function updateOrder(doc, index) {
                 // Function to update server side
@@ -66,9 +70,8 @@ export default function ContentConfigurator(props) {
                             'order': index
                         })
                     })
-        
-                    // const json = await resp.json()
-        
+
+
                 } catch (error) {
                     console.log(error)
                 }
@@ -89,6 +92,30 @@ export default function ContentConfigurator(props) {
         })
     )
 
+    useEffect(()=> {
+
+        async function getDocuments() {
+
+            try {
+                const url = `/api/entry/?feature=${props.feature.id}`
+
+                const response = await fetch(url)
+
+                const json = await response.json()
+
+                setDocuments(json)
+            } 
+            
+            catch (error) {
+                console.log(error)
+            }
+
+        }
+
+        getDocuments()
+
+    }, [props.feature])
+
     return (
         <div className="flex flex-col gap-4">
             <DndContext 
@@ -97,14 +124,14 @@ export default function ContentConfigurator(props) {
                 onDragEnd={handleDragEnd}
             >
                 <SortableContext 
-                    items={props.documents}
+                    items={documents}
                     strategy={verticalListSortingStrategy}
                 >
-                { props.documents ? props.documents.map((doc) => <ContentWidget title={doc.title} slug={doc.slug} id={doc.id} key={doc.id} point={props.feature.id} setActiveDocument={props.setActiveDocument} activeDocument={props.activeDocument} activeDocTitle={props.activeDocTitle}/>) : null }
+                { documents ? documents.map((doc) => <ContentWidget title={doc.title} slug={doc.slug} id={doc.id} key={doc.id} point={props.feature.id} setActiveDocument={props.setActiveDocument} activeDocument={props.activeDocument} activeDocTitle={props.activeDocTitle}/>) : null }
                 </SortableContext>
             </DndContext>
-            <button className="btn bg-base-100 btn-small rounded-full w-12 h-12 p-0 self-center">
-                <MdAddCircleOutline onClick={handleClick}/>
+            <button className="btn bg-base-100 btn-small rounded-full w-12 h-12 p-0 self-center" onClick={handleClick}>
+                <MdAddCircleOutline />
             </button>
         </div>
     )
@@ -129,6 +156,8 @@ function ContentWidget(props) {
     async function handleClick(e) {
         props.setActiveDocument(props.id)
     }
+
+    
 
     return (
         

@@ -3,11 +3,14 @@ import { auth } from "@/auth"
 export async function GET(request) {
     const { searchParams } = new URL(request.url)
     const featureID = searchParams.get('featureID')
-    const draw = searchParams.get('draw')
+    let draw = searchParams.get('draw')
     const session = await auth()
     
+    draw = draw === 'true' ? true : false 
+
+    const url = `${process.env.NEXT_PUBLIC_API_ENDPOINT}features/${featureID}/${draw ? 'draw' : ''}`
+
     try {
-        const url = `${process.env.NEXT_PUBLIC_API_ENDPOINT}features/${featureID}/?draw=${draw}`
         
         const response = await fetch(url, {
             method: 'GET',
@@ -54,14 +57,16 @@ export async function POST(request) {
         if (!response.ok) {
             const json = {
                 ok: false,
-                error: response.status
+                error: response.status,
+                detail: response.detail
             }
+            console.log(json)
             return new Response({json})
         }
 
         const json = await response.json()
 
-        return Response.json({ json })
+        return Response.json(json)
     } catch(error) {
         console.error(error.message)
         return new Response()

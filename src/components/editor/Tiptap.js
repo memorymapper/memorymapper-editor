@@ -24,73 +24,22 @@ import Movie from '/src/img/icons/movie.svg'
 import Undo from '/src/img/icons/arrow-back.svg'
 import Redo from '/src/img/icons/arrow-forward.svg'
 import { document } from 'postcss'
+import useDocument from '@/swrrequests/useDocument'
 
 
 export default function Tiptap(props) {
 
-    const [htmlContent, setHtmlContent] = useState(null)
-    const [title, setTitle] = useState(props.title)
+    const {document, loading, error} = useDocument(props.activeDocument)
+
+    const [htmlContent, setHtmlContent] = useState('')
+    const [title, setTitle] = useState('')
 
     const [insertImageOpen, setInsertImageOpen] = useState(false)
 
-
-    // The document ID is either loaded from props, in which case we are editing
-    // an existing document, or it is null for it is a new document...
-    const [documentId, setDocumentId] = useState(props.documentId ? props.documentId: null)
-
     function onTitleChange(e) {
         setTitle(e.target.value)
+        props.setActiveDocTitle(e.target.value)
         saveUpdateDocument()
-    }
-
-    useEffect(() => {
-
-        if (!props.activeDocument) {
-            return
-        }
-
-        console.log(props.activeDocument)
-
-        async function getDocument() {
-            try {
-                const url = `/api/entry/${props.activeDocument}/`
-                const resp = await fetch(url, {
-                    method: 'GET',
-                })
-
-                const json = await resp.json()
-
-                console.log(json)
-
-                setHtmlContent(json.json.body)
-                setTitle(json.json.title)
-
-            } catch (error) {
-                console.log(error)
-            }
-        }
-        getDocument()
-    }, [props.activeDocument])
-
-    async function saveUpdateDocument() {
-        try {
-            const url = `/api/entry/${props.activeDocument.id}/`
-            const response = await fetch(url, {
-                method: 'PUT',
-                body: JSON.stringify({
-                    id: documentId,
-                    title: title,
-                    body: htmlContent,
-                })
-            })
-            if (!response.ok) {
-                throw new Error(`Response status: ${response.status}`)
-            }
-            const json = await response.json()
-            setDocumentId(json.id)
-        } catch(error) {
-            console.error(error.message)
-        }
     }
 
     const editor = useEditor({
@@ -98,7 +47,7 @@ export default function Tiptap(props) {
         content: htmlContent,
         onUpdate: ({editor}) => {
             const html = editor.getHTML()
-            setHtmlContent(html)
+            setHtmlContent(document? document.body : html)
         },
         editorProps: {
             attributes: {
@@ -107,10 +56,77 @@ export default function Tiptap(props) {
         }
     })
 
+    useEffect(() => {
+        setHtmlContent(document ? document.body : null)
+        setTitle(document ? document.title : null)
+        if (editor) {
+            editor.commands.setContent(document ? document.body : null)
+        }
+    }, [props.activeDocument])
+
+    /*useEffect(() => {
+
+        if (!props.activeDocument) {
+            return
+        }
+
+        async function getDocument() {
+            try {
+                const url = `/api/entry/${props.activeDocument}/`
+                const resp = await fetch(url)
+
+                const json = await resp.json()
+
+                setHtmlContent(json.body)
+                setTitle(json.title)
+                editor.commands.setContent(json.body)
+            } catch (error) {
+                console.log(error)
+            }
+        }
+        getDocument()
+    }, [props.activeDocument])*/
+
+    
+
+
+    async function saveUpdateDocument() {
+        try {
+            const url = `/api/entry/${props.activeDocument}/`
+            const response = await fetch(url, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    id: props.activeDocument,
+                    title: title,
+                    body: htmlContent,
+                })
+            })
+            if (!response.ok) {
+                throw new Error(`Response status: ${response.status}`)
+            }
+            const json = await response.json()
+        } catch(error) {
+            console.error(error.message)
+        }
+    }
+
     if (!editor) {
         return null
     }
 
+    if (!props.activeDocument) {
+        return null
+    }
+
+    if (loading) {
+        return <p>Loading...</p>
+    }
+
+    if (error) {
+        return <p>Error...</p>
+    }
+
+   
     return ( 
         <>
             <InsertImage open={insertImageOpen} setOpen={setInsertImageOpen} />
@@ -122,7 +138,8 @@ export default function Tiptap(props) {
                     className={"block w-full rounded-sm border-0 p-1.5 text-gray-900 ring-1 ring-inset ring-gray-100 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-gray-400 sm:text-sm sm:leading-6"}
                     placeholder='Title'
                     onChange={onTitleChange}
-                    defaultValue={title}
+                    onBlur={onTitleChange}
+                    defaultValue={document ? document.title : document}
                 />
             </div>
             <div className='editor-toolbar mb-2'>
@@ -222,6 +239,12 @@ export default function Tiptap(props) {
                 >
                     Delete
                 </button>*/}
+                <button className="btn btn-sm" onClick={(e) => {
+                        setHtmlContent("")
+                        setTitle(null)
+                        props.setActiveDocument(null)
+                    }
+                }>Close</button>
             </div>
         </>
     )

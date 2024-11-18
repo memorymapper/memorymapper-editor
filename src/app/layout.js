@@ -1,7 +1,8 @@
 import { Inter } from "next/font/google"
 import "./globals.css"
-import Providers from "./providers";
-import {SessionProvider} from "next-auth/react";
+import Providers from "./providers"
+import {SessionProvider} from "next-auth/react"
+import Link from "next/link"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,7 +17,7 @@ export default function RootLayout({ children }) {
     <html lang="en" data-theme="emerald">
       <body className={inter.className + ' h-screen'}>
         <div className="navbar bg-base-100">
-          <a className="btn btn-ghost text-xl">Memory Map Studio</a>
+          <Link href="/" className="btn btn-ghost text-xl">Memory Map Studio</Link>
         </div>
         <div className="w-full flex h-[calc(100%-4rem)] justify-center">
           <SessionProvider>
